@@ -11,6 +11,8 @@ from pymouse import PyMouse
 from pymouse import PyMouseEvent
 import time
 
+import subprocess
+
 class event(PyMouseEvent):
 	def __init__(self):
 		super(event, self).__init__()
@@ -37,19 +39,35 @@ def getSize(filename):
 		# print("file: %s with size: %d %d" % (file1, im.width, im.height))
 		return (im.width, im.height)
 
-import subprocess
+
+
+def call_cmd(cmd_args):
+    p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE)
+    return p.stdout.read()
+
 
 def getClipboardData():
-    p = subprocess.Popen(['xclip','-selection', 'clipboard', '-o', '-t', 'image/png'], stdout=subprocess.PIPE)
-    #retcode = p.wait()
-    data = p.stdout.read()
-    return data
+    xclip_targets = call_cmd("xclip -selection clipboard -o -t TARGETS".split(" ")).decode().split("\n")
+
+    ft = None
+    if 'image/png' in xclip_targets:
+        ft = 'png'
+    elif 'image/jpeg' in xclip_targets:
+        ft = 'jpeg'
+    else:
+        raise Exception('filetype not png or jpeg')
+
+    get_image_args = ['xclip','-selection', 'clipboard', '-o', '-t', 'image/' + ft]
+    im = call_cmd(get_image_args)
+    return im, ft
+
 
 def saveImagefile(filename):
-	im = getClipboardData()
+	im,ft = getClipboardData()
+	filename = "".join(filename.split(".")[:-1])
 	if im:
 		print("save")
-		with open(filename, 'wb') as f:
+		with open(filename + '.' + ft, 'wb') as f:
 			f.write(im)
 		#im.save(filename)
 		return 0
