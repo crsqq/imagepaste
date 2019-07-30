@@ -37,11 +37,21 @@ def getSize(filename):
 		# print("file: %s with size: %d %d" % (file1, im.width, im.height))
 		return (im.width, im.height)
 
+import subprocess
+
+def getClipboardData():
+    p = subprocess.Popen(['xclip','-selection', 'clipboard', '-o', '-t', 'image/png'], stdout=subprocess.PIPE)
+    #retcode = p.wait()
+    data = p.stdout.read()
+    return data
+
 def saveImagefile(filename):
-	im = ImageGrab.getclipboard()
+	im = getClipboardData()
 	if im:
 		print("save")
-		im.save(filename)
+		with open(filename, 'wb') as f:
+			f.write(im)
+		#im.save(filename)
 		return 0
 	else:
 		return 1
